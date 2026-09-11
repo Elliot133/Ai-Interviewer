@@ -1,0 +1,11 @@
+# Dependencies and generated build output
+node_modules/
+target/
+dist/
+
+# Local configuration and runtime output
+.env
+*.log
+
+# Operating-system files
+.DS_Store

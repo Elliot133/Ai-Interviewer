@@ -1,0 +1,24 @@
+package com.aiinterview.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class ChangePasswordRequest {
+
+    @NotBlank(message = "Current password is required")
+    private String currentPassword;
+
+    @NotBlank(message = "New password is required")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
+            message = "New password must be at least 8 characters and include an uppercase letter, a lowercase letter and a number"
+    )
+    private String newPassword;
+
+    @NotBlank(message = "Please confirm your new password")
+    private String confirmNewPassword;
+}

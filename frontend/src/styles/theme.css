@@ -1,0 +1,154 @@
+/* ============================================================
+   AI Interview Simulator - Design Tokens
+   A quiet, professional "career platform" system: navy ink,
+   a single warm-amber accent for calls to action, and a clear
+   two-family type scale (Manrope for structure, Inter for text).
+   ============================================================ */
+
+:root {
+  /* Light mode (default) */
+  --color-bg: #F6F7F9;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-border: #E2E5EA;
+  --color-border-strong: #C9CFD8;
+
+  --color-ink: #101826;
+  --color-ink-soft: #445068;
+  --color-ink-faint: #6B7690;
+
+  --color-primary: #16233D;
+  --color-primary-strong: #0B1526;
+
+  --color-accent: #B5732B;
+  --color-accent-strong: #93591D;
+  --color-accent-soft: #FBEEDD;
+
+  --color-success: #1F7A5C;
+  --color-success-soft: #E4F3ED;
+  --color-danger: #B3382C;
+  --color-danger-soft: #FBEAE7;
+  --color-warning: #9A6A0B;
+  --color-warning-soft: #FBF2DD;
+
+  --font-display: 'Manrope', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 38, 0.06);
+  --shadow-md: 0 4px 16px rgba(16, 24, 38, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 38, 0.12);
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0C1420;
+  --color-surface: #131C2B;
+  --color-surface-raised: #182333;
+  --color-border: #26324A;
+  --color-border-strong: #34435F;
+
+  --color-ink: #EDF1F7;
+  --color-ink-soft: #AEB9CC;
+  --color-ink-faint: #8792A8;
+
+  --color-primary: #DCE4F2;
+  --color-primary-strong: #FFFFFF;
+
+  --color-accent: #E0994B;
+  --color-accent-strong: #F2B267;
+  --color-accent-soft: #2C2213;
+
+  --color-success: #3FAE85;
+  --color-success-soft: #113126;
+  --color-danger: #E17064;
+  --color-danger-soft: #341714;
+  --color-warning: #E0AE4E;
+  --color-warning-soft: #2E2311;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-accent-soft);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 16px;
+  }
+  body {
+    font-size: 14px;
+  }
+}
+
+textarea, input, select {
+  font-family: var(--font-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
