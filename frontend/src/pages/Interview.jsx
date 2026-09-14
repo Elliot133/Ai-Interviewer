@@ -27,7 +27,7 @@ export default function Interview() {
   const [ended, setEnded] = useState(false);
 
   const remainingSeconds = useMemo(() => {
-    if (!interview) return 0;
+    if (!interview) return null;
     const startedAt = new Date(interview.startedAt).getTime();
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     return Math.max(interview.durationSeconds - elapsed, 0);

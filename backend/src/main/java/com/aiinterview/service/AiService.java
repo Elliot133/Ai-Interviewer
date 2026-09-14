@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,8 +29,15 @@ import java.util.Map;
 @Slf4j
 public class AiService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate(createRequestFactory());
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static SimpleClientHttpRequestFactory createRequestFactory() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(5000);
+        return factory;
+    }
 
     @Value("${openai.api.key}")
     private String apiKey;
@@ -57,7 +66,7 @@ public class AiService {
     ) {}
 
     private boolean useMock() {
-        return mockMode || apiKey == null || apiKey.isBlank();
+        return mockMode || (apiKey == null || apiKey.isBlank());
     }
 
     // ---------------------------------------------------------------
@@ -92,7 +101,8 @@ public class AiService {
         } catch (AiServiceException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("Failed to generate questions via OpenAI", ex);
+            log.error("Failed to generate questions via OpenAI - endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), ex.getMessage());
             throw new AiServiceException("AI question generation is temporarily unavailable. Please try again.");
         }
     }
@@ -120,7 +130,8 @@ public class AiService {
         } catch (AiServiceException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("Failed to generate adaptive question via OpenAI", ex);
+            log.error("Failed to generate adaptive question via OpenAI - endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), ex.getMessage());
             throw new AiServiceException("AI question generation is temporarily unavailable. Please try again.");
         }
     }
@@ -155,7 +166,8 @@ public class AiService {
             return new EvaluationResult(score, maxScore, feedback, strengths, improvements,
                     modelAnswer, relevance, clarity, technicalAccuracy);
         } catch (Exception ex) {
-            log.error("Failed to evaluate answer via OpenAI", ex);
+            log.error("Failed to evaluate answer via OpenAI - endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), ex.getMessage());
             throw new AiServiceException("AI evaluation is temporarily unavailable. Please try again.");
         }
     }
@@ -181,19 +193,51 @@ public class AiService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        ResponseEntity<String> response;
         try {
-            response = restTemplate.postForEntity(apiUrl, request, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, request, String.class);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                String bodyText = response.getBody() == null ? "" : response.getBody();
+                log.error("OpenAI HTTP response not successful: statusCode={}, endpoint={}, model={}, apiKeyConfigured={}, responseBody={}",
+                        response.getStatusCode(), apiUrl, model, apiKey != null && !apiKey.isBlank(), bodyText);
+                throw new AiServiceException("AI service rejected the request. Please try again.");
+            }
+
+            JsonNode responseJson = objectMapper.readTree(response.getBody());
+            JsonNode choices = responseJson.path("choices");
+            if (choices == null || !choices.isArray() || choices.isEmpty()) {
+                String errorMessage = responseJson.path("error").path("message").asText("OpenAI returned no choices.");
+                log.error("OpenAI response did not include choices: endpoint={}, model={}, apiKeyConfigured={}, statusCode={}, error={}",
+                        apiUrl, model, apiKey != null && !apiKey.isBlank(), "200", errorMessage);
+                throw new AiServiceException("AI service rejected the request. Please try again.");
+            }
+
+            String content = choices.get(0).path("message").path("content").asText();
+            if (content == null || content.isBlank()) {
+                log.error("OpenAI returned an empty message content: endpoint={}, model={}, apiKeyConfigured={}, statusCode={}",
+                        apiUrl, model, apiKey != null && !apiKey.isBlank(), "200");
+                throw new AiServiceException("AI service rejected the request. Please try again.");
+            }
+
+            return objectMapper.readTree(content);
+        } catch (HttpStatusCodeException ex) {
+            String safeBody = ex.getResponseBodyAsString();
+            String safeMessage = (safeBody == null || safeBody.isBlank())
+                    ? ex.getMessage()
+                    : safeBody;
+            log.error("OpenAI request failed with HTTP rejection: statusCode={}, endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    ex.getStatusCode(), apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), safeMessage);
+            throw new AiServiceException("AI service rejected the request. Please try again.");
         } catch (RestClientException ex) {
+            log.error("OpenAI request failed with transport exception: endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), ex.getMessage());
             throw new AiServiceException("Could not reach the AI service. Please try again.");
+        } catch (AiServiceException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("OpenAI request failed with parse/other exception: endpoint={}, model={}, apiKeyConfigured={}, exceptionType={}, safeError={}",
+                    apiUrl, model, apiKey != null && !apiKey.isBlank(), ex.getClass().getSimpleName(), ex.getMessage());
+            throw new AiServiceException("AI service failed to produce a valid response. Please try again.");
         }
-
-        JsonNode responseJson = objectMapper.readTree(response.getBody());
-        String content = responseJson
-                .path("choices").get(0)
-                .path("message").path("content").asText();
-
-        return objectMapper.readTree(content);
     }
 
     private List<String> jsonArrayToList(JsonNode node) {
