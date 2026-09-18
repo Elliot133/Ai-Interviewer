@@ -1,6 +1,7 @@
 package com.aiinterview.controller;
 
 import com.aiinterview.dto.AuthResponse;
+import com.aiinterview.dto.GoogleAuthRequest;
 import com.aiinterview.dto.LoginRequest;
 import com.aiinterview.dto.RegisterRequest;
 import com.aiinterview.service.AuthService;
@@ -25,6 +26,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
+        return ResponseEntity.ok(authService.authenticateWithGoogle(request));
     }
 
     @PostMapping("/logout")

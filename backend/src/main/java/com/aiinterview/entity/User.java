@@ -31,8 +31,15 @@ public class User {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(nullable = false)
+    // Null for accounts created via Google Sign-In that have never set a
+    // local password.
+    @Column
     private String passwordHash;
+
+    // Google's unique subject identifier for the account. Null for users
+    // who registered with email/password and have never linked Google.
+    @Column(unique = true, length = 255)
+    private String googleId;
 
     @Column(length = 30)
     private String phoneNumber;
