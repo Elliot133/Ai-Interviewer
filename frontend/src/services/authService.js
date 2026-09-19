@@ -13,3 +13,8 @@ export async function register(payload) {
 export async function logout() {
   await api.post('/auth/logout');
 }
+
+export async function googleAuth(idToken) {
+  const { data } = await api.post('/auth/google', { idToken });
+  return data;
+}
