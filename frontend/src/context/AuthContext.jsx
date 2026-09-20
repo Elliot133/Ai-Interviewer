@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { login as loginApi, register as registerApi, logout as logoutApi, googleAuth as googleAuthApi } from '../services/authService';
+import { login as loginApi, register as registerApi, logout as logoutApi, googleAuth as googleAuthApi, googleRegister as googleRegisterApi } from '../services/authService';
 import { getCurrentUser } from '../services/userService';
 import { setAuthToken } from '../services/api';
 
@@ -40,7 +40,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async (payload) => {
-    const data = await registerApi(payload);
+    return registerApi(payload);
+  }, []);
+
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const data = await googleAuthApi(idToken);
     window.localStorage.setItem('ais_token', data.token);
     setAuthToken(data.token);
     setToken(data.token);
@@ -48,8 +52,8 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const loginWithGoogle = useCallback(async (idToken) => {
-    const data = await googleAuthApi(idToken);
+  const registerWithGoogle = useCallback(async (idToken) => {
+    const data = await googleRegisterApi(idToken);
     window.localStorage.setItem('ais_token', data.token);
     setAuthToken(data.token);
     setToken(data.token);
@@ -75,7 +79,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, isAuthenticated: !!token, login, register, loginWithGoogle, logout, updateUserLocal }}
+      value={{ user, token, loading, isAuthenticated: !!token, login, register, loginWithGoogle, registerWithGoogle, logout, updateUserLocal }}
     >
       {children}
     </AuthContext.Provider>

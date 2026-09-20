@@ -74,7 +74,10 @@ class AuthServiceTest {
     void register_throwsDuplicateEmailException_whenEmailAlreadyExists() {
         when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(true);
 
-        assertThrows(DuplicateEmailException.class, () -> authService.register(validRegisterRequest()));
+        DuplicateEmailException exception = assertThrows(DuplicateEmailException.class,
+                () -> authService.register(validRegisterRequest()));
+
+        assertEquals("This email has been used before", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
 
@@ -200,6 +203,41 @@ class AuthServiceTest {
 
         verify(userRepository).save(argThat(user ->
                 "google-sub-789".equals(user.getGoogleId()) && user.getPasswordHash() == null
+        ));
+    }
+
+    @Test
+    void googleRegister_throwsDuplicateEmailException_whenEmailAlreadyExists() {
+        GoogleUserInfo googleUser = new GoogleUserInfo("google-sub-existing", "ada@example.com", "Ada", "Lovelace");
+        when(googleTokenVerifierService.verify("valid-token")).thenReturn(googleUser);
+        when(userRepository.findByEmailIgnoreCase("ada@example.com"))
+                .thenReturn(Optional.of(new User()));
+
+        DuplicateEmailException exception = assertThrows(DuplicateEmailException.class,
+                () -> authService.registerWithGoogle(googleRequest("valid-token")));
+
+        assertEquals("This email has been used before", exception.getMessage());
+        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).findByGoogleId(anyString());
+    }
+
+    @Test
+    void googleRegister_createsNewUser_whenEmailNotTaken() {
+        GoogleUserInfo googleUser = new GoogleUserInfo("google-sub-new", "newperson@example.com", "New", "Person");
+        when(googleTokenVerifierService.verify("valid-token")).thenReturn(googleUser);
+        when(userRepository.findByEmailIgnoreCase("newperson@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any())).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0, User.class);
+            user.setId(100L);
+            return user;
+        });
+        when(jwtUtil.generateToken(100L, "newperson@example.com")).thenReturn("fake-jwt-token");
+
+        AuthResponse response = authService.registerWithGoogle(googleRequest("valid-token"));
+
+        assertEquals("fake-jwt-token", response.getToken());
+        verify(userRepository).save(argThat(user ->
+                "google-sub-new".equals(user.getGoogleId()) && "newperson@example.com".equals(user.getEmail())
         ));
     }
 

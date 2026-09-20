@@ -44,7 +44,7 @@ export default function Button({
         .btn-md { padding: 10px 18px; font-size: 14px; }
         .btn-lg { padding: 13px 24px; font-size: 15px; }
 
-        .btn-primary { background: var(--color-primary); color: #fff; }
+        .btn-primary { background: var(--color-primary); color: var(--color-primary-contrast); }
         .btn-primary:hover:not(:disabled) { background: var(--color-primary-strong); }
 
         .btn-accent { background: var(--color-accent); color: #fff; }

@@ -19,6 +19,7 @@
 
   --color-primary: #16233D;
   --color-primary-strong: #0B1526;
+  --color-primary-contrast: #FFFFFF;
 
   --color-accent: #B5732B;
   --color-accent-strong: #93591D;
@@ -58,6 +59,7 @@
 
   --color-primary: #DCE4F2;
   --color-primary-strong: #FFFFFF;
+  --color-primary-contrast: #0C1420;
 
   --color-accent: #E0994B;
   --color-accent-strong: #F2B267;

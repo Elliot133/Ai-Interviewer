@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, BrainCircuit, Mail, ArrowLeft } from 'lucide-react';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import Toast from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
 import { extractErrorMessage } from '../services/api';
 
@@ -13,7 +14,7 @@ const initialForm = {
 };
 
 export default function Register() {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, registerWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState(null);
@@ -21,6 +22,9 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [step, setStep] = useState('choice'); // choice | form
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => () => window.clearTimeout(toast?.timeoutId), [toast]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,9 +42,14 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form);
-      navigate('/dashboard');
+      const timeoutId = window.setTimeout(() => navigate('/login'), 1400);
+      setToast({ message: 'Registration successful. Please login!', type: 'success', timeoutId });
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (err?.response?.status === 409) {
+        setToast({ message: 'This email has been used before', type: 'error' });
+      } else {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -49,10 +58,14 @@ export default function Register() {
   const handleGoogle = async (token) => {
     setGoogleLoading(true);
     try {
-      await loginWithGoogle(token);
+      await registerWithGoogle(token);
       navigate('/dashboard');
     } catch (err) {
-      setError(extractErrorMessage(err));
+      if (err?.response?.status === 409) {
+        setToast({ message: 'This email has been used before', type: 'error' });
+      } else {
+        setError(extractErrorMessage(err));
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -60,6 +73,7 @@ export default function Register() {
 
   return (
     <div className="register-page">
+      {toast && <Toast message={toast.message} type={toast.type} />}
       <div className="register-card">
         <div className="register-visual">
           <div>
@@ -89,7 +103,7 @@ export default function Register() {
 
               <div className="divider"><span>or</span></div>
 
-              <GoogleSignInButton onSuccess={handleGoogle} loading={googleLoading} />
+              <GoogleSignInButton onCredential={handleGoogle} disabled={googleLoading || loading} />
 
               <p className="footer-link">Already have an account? <Link to="/login">Sign in</Link></p>
             </div>
@@ -142,39 +156,39 @@ export default function Register() {
       </div>
 
       <style>{`
-       .register-page { min-height: 100vh; background: #f4f5fb; display: grid; place-items: center; padding: 24px; }
-       .register-card { width: 100%; max-width: 1000px; background: white; border-radius: 32px; overflow: hidden; display: grid; grid-template-columns: 0.9fr 1.1fr; box-shadow: 0 20px 60px rgba(15,23,42,0.08); border: 1px solid #eef2f7; min-height: 600px; }
+      .register-page { min-height: 100vh; background: var(--color-bg); display: grid; place-items: center; padding: 24px; }
+      .register-card { width: 100%; max-width: 1000px; background: var(--color-surface); border-radius: 32px; overflow: hidden; display: grid; grid-template-columns: 0.9fr 1.1fr; box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); min-height: 600px; }
        .register-visual { background: radial-gradient(120% 120% at 0% 0%, #1e293b 0%, #0f172a 60%, #020617 100%); color: white; padding: 36px; display: flex; flex-direction: column; justify-content: space-between; }
        .brand-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; backdrop-filter: blur(10px); }
        .register-visual h2 { font-size: 32px; font-weight: 800; line-height: 1.1; margin-top: 28px; letter-spacing: -0.02em; }
-       .register-visual p { color: #94a3b8; margin-top: 12px; font-size: 15px; }
+      .register-visual p { color: #94a3b8; margin-top: 12px; font-size: 15px; }
        .visual-stats { display: flex; gap: 12px; }
        .visual-stats div { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 14px 16px; border-radius: 16px; font-size: 13px; }
        .visual-stats b { display: block; font-size: 18px; color: white; }
 
-       .register-form-wrap { padding: 36px; display: flex; flex-direction: column; justify-content: center; }
+      .register-form-wrap { padding: 36px; display: flex; flex-direction: column; justify-content: center; color: var(--color-ink); }
        .form-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-left: 60px; }
-       .form-header p { color: #64748b; font-size: 14px; margin-top: 6px; margin-bottom: 24px; margin-left: 30px; }
+      .form-header p { color: var(--color-ink-soft); font-size: 14px; margin-top: 6px; margin-bottom: 24px; margin-left: 30px; }
 
        .choice-stack { display: grid; gap: 14px; }
-       .choice-btn { width: 100%; padding: 14px 18px; border-radius: 999px; border: 1px solid #e2e8f0; background: white; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
-       .choice-btn.primary { background: #0f172a; color: white; border-color: #0f172a; }
-       .choice-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(15,23,42,0.2); }
-       .choice-btn:hover { background: #f8fafc; }
+      .choice-btn { width: 100%; padding: 14px 18px; border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
+      .choice-btn.primary { background: var(--color-primary-strong); color: var(--color-bg); border-color: var(--color-primary-strong); }
+      .choice-btn.primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+      .choice-btn:hover { background: var(--color-surface-raised); }
 
        .form { display: grid; gap: 14px; }
        .animate-in { animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
        .field { display: grid; gap: 6px; }
-       .field label { font-size: 13px; font-weight: 600; color: #334155; }
-       .hint { font-size: 11.5px; color: #94a3b8; }
-       .back-btn { display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer; width: fit-content; margin-bottom: 4px; }
+      .field label { font-size: 13px; font-weight: 600; color: var(--color-ink-soft); }
+      .hint { font-size: 11.5px; color: var(--color-ink-faint); }
+      .back-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--color-surface-raised); color: var(--color-ink); border: 1px solid var(--color-border); padding: 8px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer; width: fit-content; margin-bottom: 4px; }
        .divider { display: grid; place-items: center; position: relative; margin: 4px 0; }
-       .divider::before { content: ''; position: absolute; width: 100%; height: 1px; background: #eef2f7; }
-       .divider span { background: white; position: relative; padding: 0 12px; font-size: 12px; color: #94a3b8; }
-       .footer-link { text-align: center; font-size: 13.5px; color: #64748b; margin-top: 6px; }
-       .footer-link a { color: #0f172a; font-weight: 700; text-decoration: none; }
+      .divider::before { content: ''; position: absolute; width: 100%; height: 1px; background: var(--color-border); }
+      .divider span { background: var(--color-surface); position: relative; padding: 0 12px; font-size: 12px; color: var(--color-ink-faint); }
+      .footer-link { text-align: center; font-size: 13.5px; color: var(--color-ink-soft); margin-top: 6px; }
+      .footer-link a { color: var(--color-primary); font-weight: 700; text-decoration: none; }
 
         @media (max-width: 860px) {
          .register-card { grid-template-columns: 1fr; border-radius: 24px; min-height: auto; }

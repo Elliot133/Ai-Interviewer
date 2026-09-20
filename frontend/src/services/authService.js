@@ -18,3 +18,8 @@ export async function googleAuth(idToken) {
   const { data } = await api.post('/auth/google', { idToken });
   return data;
 }
+
+export async function googleRegister(idToken) {
+  const { data } = await api.post('/auth/google/register', { idToken });
+  return data;
+}

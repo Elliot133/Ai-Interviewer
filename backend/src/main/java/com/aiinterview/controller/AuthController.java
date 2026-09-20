@@ -19,8 +19,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Registration successful. Please login!");
     }
 
     @PostMapping("/login")
@@ -31,6 +32,11 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.authenticateWithGoogle(request));
+    }
+
+    @PostMapping("/google/register")
+    public ResponseEntity<AuthResponse> googleRegister(@Valid @RequestBody GoogleAuthRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registerWithGoogle(request));
     }
 
     @PostMapping("/logout")

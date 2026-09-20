@@ -32,7 +32,7 @@ public class AuthService {
             throw new IllegalArgumentException("Password and confirmation do not match");
         }
         if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateEmailException("An account with this email already exists");
+            throw new DuplicateEmailException("This email has been used before");
         }
 
         User user = new User();
@@ -79,6 +79,26 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail());
         return new AuthResponse(token, new UserResponse(user));
+    }
+
+    @Transactional
+    public AuthResponse registerWithGoogle(GoogleAuthRequest request) {
+        GoogleUserInfo googleUser = googleTokenVerifierService.verify(request.getIdToken());
+
+        if (userRepository.findByEmailIgnoreCase(googleUser.email()).isPresent()) {
+            throw new DuplicateEmailException("This email has been used before");
+        }
+
+        User newUser = new User();
+        newUser.setFirstName(googleUser.firstName());
+        newUser.setLastName(googleUser.lastName());
+        newUser.setEmail(googleUser.email().trim().toLowerCase());
+        newUser.setGoogleId(googleUser.googleId());
+        newUser.setPasswordHash(null);
+
+        User saved = userRepository.save(newUser);
+        String token = jwtUtil.generateToken(saved.getId(), saved.getEmail());
+        return new AuthResponse(token, new UserResponse(saved));
     }
 
     private User linkOrCreateGoogleUser(GoogleUserInfo googleUser) {
