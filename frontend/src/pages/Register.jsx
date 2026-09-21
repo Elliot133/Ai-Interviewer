@@ -116,11 +116,11 @@ export default function Register() {
               <div className="row">
                 <div className="field">
                   <label>First name</label>
-                  <Input name="firstName" value={form.firstName} onChange={handleChange} placeholder="John" error={fieldErrors.firstName} />
+                  <Input name="firstName" value={form.firstName} onChange={handleChange} placeholder="elly" error={fieldErrors.firstName} />
                 </div>
                 <div className="field">
                   <label>Last name</label>
-                  <Input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Doe" error={fieldErrors.lastName} />
+                  <Input name="lastName" value={form.lastName} onChange={handleChange} placeholder="cssh" error={fieldErrors.lastName} />
                 </div>
               </div>
 
@@ -131,13 +131,13 @@ export default function Register() {
 
               <div className="field">
                 <label>Password</label>
-                <Input name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••" />
+                <Input name="password" type="password" value={form.password} onChange={handleChange} placeholder="******" />
                 <span className="hint">At least 8 chars, one uppercase, one lowercase, one number</span>
               </div>
 
               <div className="field">
                 <label>Confirm password</label>
-                <Input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="••••••••" error={fieldErrors.confirmPassword} />
+                <Input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="******" error={fieldErrors.confirmPassword} />
               </div>
 
               <div className="field">
