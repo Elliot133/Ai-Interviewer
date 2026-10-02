@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-interview-backend
+  namespace: ai-interview
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-interview-backend
+  template:
+    metadata:
+      labels:
+        app: ai-interview-backend
+    spec:
+      containers:
+        - name: backend
+          image: ai-interview-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
